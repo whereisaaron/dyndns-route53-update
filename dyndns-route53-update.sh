@@ -17,6 +17,9 @@ TYPE="A"
 # Get the external IP address
 IP=`curl -ss https://icanhazip.com/`
 
+# Get the current live IP Address
+CURRENTIP=`host $RECORDSET | grep -Eo -m 1 '[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}'`
+
 function valid_ip()
 {
     local  ip=$1
@@ -43,7 +46,12 @@ if ! valid_ip $IP; then
     echo "Invalid IP address: $IP" >> "$LOGFILE"
     exit 1
 fi
- 
+
+if ! valid_ip $CURRENTIP; then
+    echo "Invalid IP address: $IP" >> "$LOGFILE"
+    exit 1
+fi
+
 # Check if the IP has changed
 if [ ! -f "$IPFILE" ]
     then
@@ -51,7 +59,7 @@ if [ ! -f "$IPFILE" ]
 fi
 
 # Was grep -Fxqz but busybox does not support 'x' whole line match 
-if grep -Fqz "$IP" "$IPFILE"; then
+if [ "$IP" == "$CURRENTIP" ]; then
     # Log if no change
     echo "IP is still $IP. Exiting" >> "$LOGFILE"
     exit 0
